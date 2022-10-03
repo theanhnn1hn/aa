@@ -2,11 +2,11 @@ import sys
 import os
 
 def main():
-    username="userproxy"
+    username="bienanh"
     try:
-        password_proxy = 'Abccba@123'
+        password_proxy = 'abc1872@123'
     except:
-        password_proxy = 'Abccba@123'
+        password_proxy = 'abc1872@123'
     os.system("apt-get update")
     os.system("apt-get -y install build-essential libwrap0-dev libpam0g-dev libkrb5-dev libsasl2-dev")
     os.system("wget --no-check-certificate https://raw.githubusercontent.com/theanhnn1hn/proxyv6/main/dante.tgz")
