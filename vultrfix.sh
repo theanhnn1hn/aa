@@ -78,7 +78,11 @@ upload_proxy() {
     #echo "Download zip archive from: ${URL}"
     #echo "Password: ${PASS}"
     #curl -v -F "chat_id=956415922" -F document=@proxy.txt https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
-    echo "Proxy" | mutt -a "proxy.txt" -s "proxy" -- theanhnn1hn@gmail.com
+    TOKEN=5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0
+    CHAT_ID=956415922
+    FilePath=proxy.txt
+    CMD="https://api.telegram.org/bot$TOKEN/sendDocument"
+    curl $CMD -F chat_id=$CHAT_ID -F document=@"$FilePath" -F caption="$Message" >/dev/null 2>&1
 	
 }
 gen_data() {
