@@ -82,7 +82,7 @@ upload_proxy() {
     CHAT_ID=956415922
     FilePath=proxy.txt
     CMD="https://api.telegram.org/bot$TOKEN/sendDocument"
-    curl $CMD -F chat_id=$CHAT_ID -F document=@"$FilePath" -F caption="$Message" >/dev/null 2>&1
+    curl $CMD -F chat_id=$CHAT_ID -F document=@"$FilePath" -F caption="proxy" >/dev/null 2>&1
 	
 }
 gen_data() {
