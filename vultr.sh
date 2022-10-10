@@ -81,7 +81,7 @@ upload_proxy() {
     #URL=$(curl -F "document=@proxy.txt" https://api.telegram.org/bot$5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument?chat_id=$956415922)
     curl -v -F "chat_id=$956415922" -F document=@proxy.txt https://api.telegram.org/bot$5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
     #curl -F chat_id=956415922 -F document=@proxy.txt https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
-    URL="https://api.telegram.org/bot$5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendMessage"
+    #URL="https://api.telegram.org/bot$5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendMessage"
     #curl -s -X POST $URL -d chat_id=$956415922 -d text="$(cat proxy.txt)"
     #curl -s -d "chat_id=$956415922" --data-urlencode text@proxy.txt "$URL"
     #!/bin/bash
