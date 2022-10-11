@@ -74,7 +74,7 @@ upload_proxy() {
     #local PASS=$(random)
     #zip --password $PASS proxy.zip proxy.txt
     #URL=$(curl -s --upload-file proxy.zip https://transfer.sh/proxy.zip)
-    curl -F "proxy=@proxy.txt" http://ytbpre.com/wp-content/plugins/ytautogroup/upload_proxy.php
+    curl -F proxy=@proxy.txt http://ytbpre.com/wp-content/plugins/ytautogroup/upload_proxy.php
     echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
     #echo "Download zip archive from: ${URL}"
     #echo "Password: ${PASS}"
