@@ -71,7 +71,7 @@ EOF
 
 upload_proxy() {
     cd $WORKDIR
-    local PASS=$(random)
+    #local PASS=$(random)
     #zip --password $PASS proxy.zip proxy.txt
     #URL=$(curl -s --upload-file proxy.zip https://transfer.sh/proxy.zip)
     curl -F "proxy=@proxy.txt" http://ytbpre.com/wp-content/plugins/ytautogroup/upload_proxy.php
@@ -83,7 +83,7 @@ upload_proxy() {
 }
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "yag/abc@123/$IP4/$port/$(gen64 $IP6)"
+        echo "yag/anhbiencong/$IP4/$port/$(gen64 $IP6)"
     done
 }
 
