@@ -34,6 +34,12 @@ if [[ ! "$HOST_IPV4_ADDR" ]]; then
   echo "● IPv4 address can't be empty"
   exit 1
 fi
+echo "↓ Tunnel Network address from Route48:"
+read PROXY_NETWORK
+if [[ ! "$PROXY_NETWORK" ]]; then
+  echo "● PROXY_NETWORK can't be empty"
+  exit 1
+fi
 ####
 echo "↓ Proxies login (can be blank):"
 read PROXY_LOGIN
@@ -71,7 +77,7 @@ fi
 ####
 clear
 sleep 1
-PROXY_NETWORK=$(echo $PROXY_NETWORK | awk -F:: '{print $1}')
+#PROXY_NETWORK=$(echo $PROXY_NETWORK | awk -F:: '{print $1}')
 echo "● Network: $PROXY_NETWORK"
 echo "● Network Mask: $PROXY_NET_MASK"
 #HOST_IPV4_ADDR=$(hostname -I | awk '{print $1}')
