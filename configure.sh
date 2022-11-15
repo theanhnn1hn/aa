@@ -165,7 +165,7 @@ cat >~/3proxy/3proxy.cfg <<END
 
 daemon
 maxconn 100
-nserver 1.1.1.1
+nserver 8.8.8.8
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
