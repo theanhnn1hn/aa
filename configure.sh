@@ -1,12 +1,12 @@
 #!/bin/bash
 
-if ping6 -c3 google.com &>/dev/null; then
-  echo "Your server is ready to set up IPv6 proxies!"
-else
-  echo "Your server can't connect to IPv6 addresses."
-  echo "Please, connect ipv6 interface to your server to continue."
-  exit 1
-fi
+#if ping6 -c3 google.com &>/dev/null; then
+  #echo "Your server is ready to set up IPv6 proxies!"
+#else
+  #echo "Your server can't connect to IPv6 addresses."
+  #echo "Please, connect ipv6 interface to your server to continue."
+  #exit 1
+#fi
 
 ####
 echo "↓ Routed /48 from route48.org (*:*:*::/*):"
@@ -28,7 +28,12 @@ if [[ ! "$TUNNEL_IPV4_ADDR" ]]; then
   echo "● IPv4 address can't be empty"
   exit 1
 fi
-
+echo "↓ Server IPv4 address from VPS:"
+read HOST_IPV4_ADDR
+if [[ ! "$HOST_IPV4_ADDR" ]]; then
+  echo "● IPv4 address can't be empty"
+  exit 1
+fi
 ####
 echo "↓ Proxies login (can be blank):"
 read PROXY_LOGIN
@@ -69,7 +74,7 @@ sleep 1
 PROXY_NETWORK=$(echo $PROXY_NETWORK | awk -F:: '{print $1}')
 echo "● Network: $PROXY_NETWORK"
 echo "● Network Mask: $PROXY_NET_MASK"
-HOST_IPV4_ADDR=$(hostname -I | awk '{print $1}')
+#HOST_IPV4_ADDR=$(hostname -I | awk '{print $1}')
 echo "● Host IPv4 address: $HOST_IPV4_ADDR"
 echo "● Tunnel IPv4 address: $TUNNEL_IPV4_ADDR"
 echo "● Proxies count: $PROXY_COUNT, starting from port: $PROXY_START_PORT"
@@ -217,6 +222,13 @@ ulimit -u 600000
 ulimit -i 1200000
 ulimit -s 1000000
 ulimit -l 200000
+/sbin/ip addr add ${PROXY_NETWORK}::/${PROXY_NET_MASK} dev R48-TUNNEL
+sleep 5
+/sbin/ip -6 route add default via ${PROXY_NETWORK}::1
+/sbin/ip -6 route add local ${PROXY_NETWORK}::/${PROXY_NET_MASK} dev lo
+/sbin/ip tunnel add R48-TUNNEL mode sit remote ${TUNNEL_IPV4_ADDR} local ${HOST_IPV4_ADDR} ttl 255
+/sbin/ip link set R48-TUNNEL up
+/sbin/ip -6 route add 2000::/3 dev R48-TUNNEL
 ~/ndppd/ndppd -d -c ~/ndppd/ndppd.conf
 sleep 2
 ~/3proxy/src/3proxy ~/3proxy/3proxy.cfg
