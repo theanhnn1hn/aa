@@ -73,12 +73,12 @@ upload_proxy() {
     cd $WORKDIR
     local PASS=$(random)
     zip --password $PASS proxy.zip proxy.txt
-    URL=$(curl -F "file=@proxy.zip" https://file.io)
+    URL=$(curl -s --upload-file proxy.zip https://transfer.sh/proxy.zip)
+
     echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
     echo "Download zip archive from: ${URL}"
     echo "Password: ${PASS}"
 
-    #curl -F chat_id="-956415922" -F document=@"proxy.txt" -F caption="Proxy file" https://api.telegram.org/bot5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
 }
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
