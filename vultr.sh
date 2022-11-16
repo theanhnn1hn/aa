@@ -78,11 +78,12 @@ upload_proxy() {
     echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
     echo "Download zip archive from: ${URL}"
     echo "Password: ${PASS}"
+    #curl -v -F "chat_id=956415922" -F document=@proxy.txt https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
 	
 }
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "yag/anhbiencong/$IP4/$port/$(gen64 $IP6)"
+        echo "yag/anhbiencong/$IP4/$port/$(gen64 $LAST_IP6)"
     done
 }
 
@@ -108,12 +109,12 @@ WORKDATA="${WORKDIR}/data.txt"
 mkdir $WORKDIR && cd $_
 
 IP4=$(curl -4 -s icanhazip.com)
-IP6="2001:19f0"
-#IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
+IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
+LAST_IP6=$(curl -6 -s icanhazip.com | cut -f6-7 -d':')
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
-FIRST_PORT=22368
-LAST_PORT=22468
+FIRST_PORT=10000
+LAST_PORT=10500
 
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
