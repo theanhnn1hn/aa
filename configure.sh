@@ -150,10 +150,10 @@ END
 ####
 echo ">-- Setting up 3proxy"
 cd ~
-wget -q https://github.com/z3APA3A/3proxy/archive/0.8.13.tar.gz
-tar xzf 0.8.13.tar.gz
-mv ~/3proxy-0.8.13 ~/3proxy
-rm 0.8.13.tar.gz
+wget -q https://github.com/z3APA3A/3proxy/archive/0.9.3.tar.gz
+tar xzf 0.9.3.tar.gz
+mv ~/3proxy-0.9.3 ~/3proxy
+rm 0.9.3.tar.gz
 cd ~/3proxy
 chmod +x src/
 touch src/define.txt
