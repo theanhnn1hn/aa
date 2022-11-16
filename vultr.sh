@@ -82,7 +82,7 @@ upload_proxy() {
 }
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "yag/anhbiencong/$IP4/$port/$(gen64 $IP6)"
+        echo "yag/anhbiencong/$IP4/$port/$(gen64 $IP62)"
     done
 }
 
@@ -108,8 +108,8 @@ WORKDATA="${WORKDIR}/data.txt"
 mkdir $WORKDIR && cd $_
 
 IP4=$(curl -4 -s icanhazip.com)
-IP6="2001:19f0"
-
+IP62="2001:19f0"
+IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
 FIRST_PORT=22368
