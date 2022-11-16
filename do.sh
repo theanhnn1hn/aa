@@ -9,7 +9,7 @@ gen64() {
 	ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
 	}
-	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64):$(ip64):$(ip64)"
+	echo "$1:$(ip64):$(ip64):$2"
 }
 install_3proxy() {
     echo "installing 3proxy"
@@ -63,7 +63,7 @@ upload_proxy() {
 }
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "$(random)/$(random)/$IP4/$port/$(gen64 $LAST_IP6)"
+        echo "$(random)/$(random)/$IP4/$port/$(gen64 $IP6 $LAST_IP6)"
     done
 }
 
