@@ -1,63 +1,209 @@
 #!/bin/sh
-random() {
-	tr </dev/urandom -dc A-Za-z0-9 | head -c5
-	echo
+
+# centos 7.5
+# bash <(curl -s -H 'Pragma: no-cache' -H 'Cache-Control: no-cache' "https://raw.githubusercontent.com/MohistAttack/ipv4-ipv6-proxy/master/scripts/ipv4-ipv6.sh")
+
+GREEN='\033[0;32m'
+ORANGE='\033[0;33m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+eecho() {
+    echo -e "${GREEN}$1${NC}"
 }
 
-array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
-main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
-gen64() {
-	ip64() {
+eecho "Getting IPv4 ..."
+IP4=$(curl -4 -s icanhazip.com -m 10)
+
+eecho "Getting IPv6 ..."
+IP6=$(curl -6 -s icanhazip.com -m 10)
+if [[ $IP6 != *:* ]]; then
+  IP6=
+fi
+
+eecho "IPv4 = ${IP4}. IPv6 = ${IP6}"
+
+if [ ! -n "$IP4" ]; then
+  eecho "IPv4 Nout Found. Exit"
+  exit
+fi
+
+while [[ $IP6 != *:* ]] || [ ! -n "$IP6" ]; do
+    eecho "IPv6 Nout Found, Please check environment. Exit"
+    exit
+#   eecho "Invalid IPv6, Please input it manually:"
+#   read IP6
+done
+
+while [ ! $PROXYCOUNT ] || [[ $PROXYCOUNT -lt 1 ]] || [[ $PROXYCOUNT -gt 10000 ]]; do
+    eecho "How many proxy do you want to create? 1-10000"
+    read PROXYCOUNT
+done
+
+while [ ! -n "$STATIC" ]; do
+    eecho "Do you want to use static mode: (yes/no, no as default)"
+    read STATIC
+    if [[ $STATIC == "y" ]] || [[ $STATIC == "yes" ]]; then
+        STATIC="yes"
+    else
+        STATIC="no"
+    fi
+done
+
+while [[ $IP6PREFIXLEN -ne 48 ]] && [[ $IP6PREFIXLEN -ne 64 ]] && [[ $IP6PREFIXLEN -ne 112 ]]; do
+    eecho "Please input prefixlen for IPv6: (48/64/112, 112 as default)"
+    read IP6PREFIXLEN
+    if [ ! $IP6PREFIXLEN ]; then
+        IP6PREFIXLEN=112
+    fi
+done
+
+if [[ $IP6PREFIXLEN -eq 112 ]]; then
+    INCTAIL="yes"
+else
+    while [ ! -n "$INCTAIL" ]; do
+        eecho "Do you want to use [increasing tail] way to generate addresses: (yes/no, no as default)"
+        read INCTAIL
+        if [[ $INCTAIL == "y" ]] || [[ $INCTAIL == "yes" ]]; then
+            INCTAIL="yes"
+        else
+            INCTAIL="no"
+        fi
+    done
+fi
+
+if [[ $INCTAIL == "yes" ]]; then
+    while [ ! -n "$INCTAILSTEPS" ]; do
+        eecho "How many steps do you want for [increasing tail] way: (1 as default)"
+        read INCTAILSTEPS
+        if [[ $INCTAILSTEPS -lt 1 ]]; then
+            INCTAILSTEPS=1
+        fi
+    done
+fi
+
+if [[ $INCTAIL == "yes" ]]; then
+    IP6PREFIX=$(echo $IP6 | rev | cut -f2- -d':' | rev)
+else
+    if [ $IP6PREFIXLEN -eq 48 ]; then
+        IP6PREFIX=$(echo $IP6 | cut -f1-3 -d':')
+    fi
+    if [ $IP6PREFIXLEN -eq 64 ]; then
+        IP6PREFIX=$(echo $IP6 | cut -f1-4 -d':')
+    fi
+fi
+eecho "IPv6 PrefixLen: $IP6PREFIXLEN --> Prefix: $IP6PREFIX"
+
+while [ ! -n "$ETHNAME" ]; do
+  eecho "Please input network interface name: (eth0 as default)"
+  read ETHNAME
+  if [[ $ETHNAME == "" ]]; then
+    ETHNAME="eth0"
+  fi
+done
+
+while [ ! -n "$PROXYUSER" ]; do
+    eecho "Please input username for proxy: (smile as default)"
+    read PROXYUSER
+    if [[ $PROXYUSER == "" ]]; then
+        PROXYUSER="smile"
+    fi
+done
+
+while [ ! -n "$PROXYPASS" ]; do
+    eecho "Please input password for proxy: (girl as default)"
+    read PROXYPASS
+    if [[ $PROXYPASS == "" ]]; then
+        PROXYPASS="girl"
+    fi
+done
+
+#################### functions ####################
+gen_data() {
+    array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
+    ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
 	}
-	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64):$(ip64):$(ip64)
-}
-install_3proxy() {
-    echo "installing 3proxy"
-    mkdir -p /3proxy
-    cd /3proxy
-    URL="https://github.com/z3APA3A/3proxy/archive/0.9.3.tar.gz"
-    wget -qO- $URL | bsdtar -xvf-
-    cd 3proxy-0.9.3
-    make -f Makefile.Linux
-    mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
-    mv /3proxy/3proxy-0.9.3/bin/3proxy /usr/local/etc/3proxy/bin/
-    wget https://raw.githubusercontent.com/xlandgroup/ipv4-ipv6-proxy/master/scripts/3proxy.service-Centos8 --output-document=/3proxy/3proxy-0.9.3/scripts/3proxy.service2
-    cp /3proxy/3proxy-0.9.3/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
-    systemctl link /usr/lib/systemd/system/3proxy.service
-    systemctl daemon-reload
-#    systemctl enable 3proxy
-    echo "* hard nofile 999999" >>  /etc/security/limits.conf
-    echo "* soft nofile 999999" >>  /etc/security/limits.conf
-    echo "net.ipv6.conf.enp1s0.proxy_ndp=1" >> /etc/sysctl.conf
-    echo "net.ipv6.conf.all.proxy_ndp=1" >> /etc/sysctl.conf
-    echo "net.ipv6.conf.default.forwarding=1" >> /etc/sysctl.conf
-    echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
-    echo "net.ipv6.ip_nonlocal_bind = 1" >> /etc/sysctl.conf
-    sysctl -p
-    systemctl stop firewalld
-    systemctl disable firewalld
 
-    cd $WORKDIR
+    seq 1 $PROXYCOUNT | while read idx; do
+        port=$(($idx+10000))
+        if [[ $INCTAIL == "yes" ]] ; then
+            suffix=$((($idx)*$INCTAILSTEPS))
+            suffix=$(printf '%x\n' $suffix)
+            echo "$PROXYUSER/$PROXYPASS/$IP4/$port/$IP6PREFIX:$suffix"
+        else
+            if [[ $IP6PREFIXLEN -eq 64 ]]; then
+                echo "$PROXYUSER/$PROXYPASS/$IP4/$port/$IP6PREFIX:$(ip64):$(ip64):$(ip64):$(ip64)"
+            fi
+            if [[ $IP6PREFIXLEN -eq 48 ]]; then
+                echo "$PROXYUSER/$PROXYPASS/$IP4/$port/$IP6PREFIX:$(ip64):$(ip64):$(ip64):$(ip64):$(ip64)"
+            fi
+        fi
+    done
 }
+
+gen_iptables() {
+    cat <<EOF
+$(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
+EOF
+}
+
+gen_ifconfig() {
+    cat <<EOF
+$(awk -v ETHNAME="$ETHNAME" -v IP6PREFIXLEN="$IP6PREFIXLEN" -F "/" '{print "ifconfig " ETHNAME " inet6 add " $5 "/" IP6PREFIXLEN}' ${WORKDATA})
+EOF
+}
+
+gen_static() {
+    NETWORK_FILE="/etc/sysconfig/network-scripts/ifcfg-$ETHNAME"
+    cat <<EOF
+    sed -i '/^IPV6ADDR_SECONDARIES/d' $NETWORK_FILE && echo 'IPV6ADDR_SECONDARIES="$(awk -v IP6PREFIXLEN="$IP6PREFIXLEN" -F "/" '{print $5 "/" IP6PREFIXLEN}' ${WORKDATA} | sed -z 's/\n/ /g')"' >> $NETWORK_FILE
+EOF
+}
+
+gen_proxy_file() {
+    cat <<EOF
+$(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
+EOF
+}
+
+
+install_3proxy() {
+    eecho "Installing 3proxy ..."
+    git clone https://github.com/MohistAttack/3proxy
+    cd 3proxy
+    ln -s Makefile.Linux Makefile
+    make
+    make install
+    cd ..
+}
+
+# https://3proxy.ru/doc/man3/3proxy.cfg.3.html
+# https://github.com/3proxy/3proxy/blob/master/scripts/3proxy.cfg
+
+# log /logs/3proxy-%y%m%d.log D
+# rotate 30
+# if need , please add before cmd: counter /count/3proxy.3cf 
 
 gen_3proxy() {
     cat <<EOF
-daemon
-maxconn 2000
-nserver 1.1.1.1
-nserver 8.8.4.4
-nserver 2001:4860:4860::8888
-nserver 2001:4860:4860::8844
 nscache 65536
-timeouts 1 5 30 60 180 1800 15 60
-setgid 65535
-setuid 65535
-stacksize 6291456 
-flush
-auth strong
+nserver 8.8.8.8
+nserver 8.8.4.4
 
-users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
+config /conf/3proxy.cfg
+monitor /conf/3proxy.cfg
+
+counter /count/3proxy.3cf
+
+include /conf/counters
+include /conf/bandlimiters
+
+users $(awk -F "/" '{print $1 ":CL:" $2}' ${WORKDATA} | uniq | sed -z 's/\n/ /g')
+
+flush
 
 $(awk -F "/" '{print "auth strong\n" \
 "allow " $1 "\n" \
@@ -66,76 +212,65 @@ $(awk -F "/" '{print "auth strong\n" \
 EOF
 }
 
-gen_proxy_file_for_user() {
-    cat >proxy.txt <<EOF
-$(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
-EOF
-}
+####################
+eecho "Installing apps ... (yum)"
+yum -y install gcc net-tools bsdtar zip git make
 
-upload_proxy() {
-    cd $WORKDIR
-    local PASS=$(random)
-    zip --password $PASS proxy.zip proxy.txt
-    URL=$(curl -F "file=@proxy.zip" https://file.io)
-    echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
-    echo "Download zip archive from: ${URL}"
-    echo "Password: ${PASS}"
+###################
+install_3proxy 
 
-}
-gen_data() {
-    seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "username/abccba123/$IP4/$port/$(gen64 $IP6)"
-    done
-}
-
-gen_iptables() {
-    cat <<EOF
-    $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
-EOF
-}
-
-gen_ifconfig() {
-    cat <<EOF
-$(awk -F "/" '{print "ifconfig '$main_interface' inet6 add " $5 "/64"}' ${WORKDATA})
-EOF
-}
-echo "installing apps"
-yum -y install gcc net-tools bsdtar zip make >/dev/null
-
-install_3proxy
-
-echo "working folder = /home/proxy-installer"
-WORKDIR="/home/proxy-installer"
+# ###################
+WORKDIR="/usr/local/3proxy/installer"
 WORKDATA="${WORKDIR}/data.txt"
-mkdir $WORKDIR && cd $_
+mkdir -p $WORKDIR
+eecho "Working folder = $WORKDIR"
 
-IP4=$(curl -4 -s icanhazip.com)
-IP6="2001:19f0"
-#IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
-
-echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
-
-FIRST_PORT=22368
-LAST_PORT=22468
-
-gen_data >$WORKDIR/data.txt
+gen_data >$WORKDATA
+gen_3proxy >/usr/local/3proxy/conf/3proxy.cfg
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
-chmod +x $WORKDIR/boot_*.sh /etc/rc.local
+gen_static >$WORKDIR/boot_static.sh
 
-gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
+BOOTRCFILE="$WORKDIR/boot_rc.sh"
 
-cat >>/etc/rc.local <<EOF
-systemctl start NetworkManager.service
-ifup enp1s0
+REGISTER_LOGIC="systemctl restart network && bash ${WORKDIR}/boot_ifconfig.sh"
+if [[ $STATIC == "yes" ]]; then
+    REGISTER_LOGIC="bash ${WORKDIR}/boot_static.sh && systemctl restart network"
+fi
+
+cat >$BOOTRCFILE <<EOF
 bash ${WORKDIR}/boot_iptables.sh
-bash ${WORKDIR}/boot_ifconfig.sh
-ulimit -n 65535
-/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg &
+${REGISTER_LOGIC}
+systemctl restart 3proxy
+
+# systemctl stop firewalld
+# systemctl disable firewalld
+# systemctl disable firewalld.service
+EOF
+chmod +x ${WORKDIR}/boot_*.sh
+
+
+# change ulimit for too many open files
+grep -qxF '* soft nofile 1024000' /etc/security/limits.conf || cat >>/etc/security/limits.conf <<EOF 
+
+* soft nofile 1024000
+* hard nofile 1024000
 EOF
 
+# qxF match whole line
+grep -qxF "bash $BOOTRCFILE" /etc/rc.local || cat >>/etc/rc.local <<EOF 
+bash $BOOTRCFILE
+EOF
+chmod +x /etc/rc.local
 bash /etc/rc.local
 
-gen_proxy_file_for_user
+PROXYFILE=proxy.txt
+gen_proxy_file >$PROXYFILE
+eecho "Done with $PROXYFILE"
 
-upload_proxy
+zip --password $PROXYPASS proxy.zip $PROXYFILE
+URL=$(curl -s --upload-file proxy.zip http://transfer.sh/smile.zip)
+
+eecho "Proxy is ready! Format IP:PORT:LOGIN:PASS"
+eecho "Download zip archive from: ${URL}"
+eecho "Password: ${PROXYPASS}"
