@@ -108,7 +108,7 @@ while [ ! -n "$PROXYUSER" ]; do
     eecho "Please input username for proxy: "
     read PROXYUSER
     if [[ $PROXYUSER == "" ]]; then
-        PROXYUSER="smile"
+        PROXYUSER="username"
     fi
 done
 
@@ -116,7 +116,7 @@ while [ ! -n "$PROXYPASS" ]; do
     eecho "Please input password for proxy: "
     read PROXYPASS
     if [[ $PROXYPASS == "" ]]; then
-        PROXYPASS="girl"
+        PROXYPASS="abccba123"
     fi
 done
 
