@@ -105,7 +105,7 @@ while [ ! -n "$ETHNAME" ]; do
 done
 
 while [ ! -n "$PROXYUSER" ]; do
-    eecho "Please input username for proxy: (smile as default)"
+    eecho "Please input username for proxy: "
     read PROXYUSER
     if [[ $PROXYUSER == "" ]]; then
         PROXYUSER="smile"
@@ -113,7 +113,7 @@ while [ ! -n "$PROXYUSER" ]; do
 done
 
 while [ ! -n "$PROXYPASS" ]; do
-    eecho "Please input password for proxy: (girl as default)"
+    eecho "Please input password for proxy: "
     read PROXYPASS
     if [[ $PROXYPASS == "" ]]; then
         PROXYPASS="girl"
