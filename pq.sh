@@ -11,7 +11,7 @@ gen64() {
 	ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
 	}
-	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64):$(ip64):$(ip64):$2"
+	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64):$(ip64)"
 }
 install_3proxy() {
     echo "installing 3proxy"
@@ -112,13 +112,13 @@ WORKDATA="${WORKDIR}/data.txt"
 mkdir $WORKDIR && cd $_
 
 IP4=$(curl -4 -s icanhazip.com)
-IP6=$(curl -6 -s icanhazip.com | cut -f1-2 -d':')
+IP6=$(curl -6 -s icanhazip.com | cut -f1-3 -d':')
 #LAST_IP6=$(curl -6 -s icanhazip.com | cut -f4 -d':')
 
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
-FIRST_PORT=10000
-LAST_PORT=11000
+FIRST_PORT=22368
+LAST_PORT=22568
 
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
@@ -141,4 +141,4 @@ bash /etc/rc.local
 
 gen_proxy_file_for_user
 
-upload_proxy
+#upload_proxy
