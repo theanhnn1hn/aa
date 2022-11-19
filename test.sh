@@ -268,9 +268,9 @@ PROXYFILE=proxy.txt
 gen_proxy_file >$PROXYFILE
 eecho "Done with $PROXYFILE"
 
-zip --password $PROXYPASS proxy.zip $PROXYFILE
-URL=$(curl -s --upload-file proxy.zip http://transfer.sh/smile.zip)
+#zip --password $PROXYPASS proxy.zip $PROXYFILE
+#URL=$(curl -s --upload-file proxy.zip http://transfer.sh/smile.zip)
 
-eecho "Proxy is ready! Format IP:PORT:LOGIN:PASS"
-eecho "Download zip archive from: ${URL}"
-eecho "Password: ${PROXYPASS}"
+#eecho "Proxy is ready! Format IP:PORT:LOGIN:PASS"
+#eecho "Download zip archive from: ${URL}"
+#eecho "Password: ${PROXYPASS}"
