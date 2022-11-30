@@ -30,6 +30,24 @@ if [[ ! "$TUNNEL_IPV4_ADDR" ]]; then
 fi
 
 ####
+####
+echo "↓ Server IPv4 address from VPS:"
+read HOST_IPV4_ADDR
+if [[ ! "$HOST_IPV4_ADDR" ]]; then
+  echo "● IPv4 address can't be empty"
+  exit 1
+fi
+
+####
+####
+echo "↓ PROXY NETWORK:"
+read PROXY_NETWORK
+if [[ ! "$PROXY_NETWORK" ]]; then
+  echo "● PROXY NETWORK address can't be empty"
+  exit 1
+fi
+
+####
 echo "↓ Proxies login (can be blank):"
 read PROXY_LOGIN
 
@@ -66,10 +84,10 @@ fi
 ####
 clear
 sleep 1
-PROXY_NETWORK=$(echo $PROXY_NETWORK | awk -F:: '{print $1}')
+#PROXY_NETWORK=$(echo $PROXY_NETWORK | awk -F:: '{print $1}')
 echo "● Network: $PROXY_NETWORK"
 echo "● Network Mask: $PROXY_NET_MASK"
-HOST_IPV4_ADDR=$(hostname -I | awk '{print $1}')
+#HOST_IPV4_ADDR=$(hostname -I | awk '{print $1}')
 echo "● Host IPv4 address: $HOST_IPV4_ADDR"
 echo "● Tunnel IPv4 address: $TUNNEL_IPV4_ADDR"
 echo "● Proxies count: $PROXY_COUNT, starting from port: $PROXY_START_PORT"
