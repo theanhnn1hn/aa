@@ -1,4 +1,9 @@
 #!/bin/sh
+get_network_interface() {
+  ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'
+}
+
+INTERFACE=$(get_network_interface | head -n 1 | tr -d ' ')
 random() {
     tr </dev/urandom -dc A-Za-z0-9 | head -c5
     echo
@@ -43,7 +48,7 @@ install_3proxy() {
 #    systemctl enable 3proxy
     echo "* hard nofile 999999" >>  /etc/security/limits.conf
     echo "* soft nofile 999999" >>  /etc/security/limits.conf
-    echo "net.ipv6.conf.enp1s0.proxy_ndp=1" >> /etc/sysctl.conf
+    echo "net.ipv6.conf.${INTERFACE}.proxy_ndp=1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.all.proxy_ndp=1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.default.forwarding=1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
@@ -110,7 +115,7 @@ EOF
 
 gen_ifconfig() {
     cat <<EOF
-$(awk -F "/" '{print "ifconfig enp1s0 inet6 add " $5 "/64"}' ${WORKDATA})
+$(awk -F "/" '{print "ifconfig ${INTERFACE} inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
 echo "installing apps"
@@ -142,7 +147,7 @@ gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
 cat >>/etc/rc.local <<EOF
 systemctl start NetworkManager.service
-ifup enp1s0
+ifup ${INTERFACE}
 bash ${WORKDIR}/boot_iptables.sh
 bash ${WORKDIR}/boot_ifconfig.sh
 ulimit -n 65535
