@@ -33,7 +33,11 @@ while [[ $IP6 != *:* ]] || [ ! -n "$IP6" ]; do
     exit
 done
 
-PROXYCOUNT=200
+echo "Enter the number of proxies you want to create:"
+read 
+
+STARTING_PORT=23000
+PROXYCOUNT=$1
 
 STATIC="no"
 INCTAIL="no"
@@ -50,8 +54,8 @@ gen_data() {
     ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
 	}
-    seq $PROXYCOUNT | while read idx; do
-        port=$(($idx+20000))
+    for idx in $(seq 1 $PROXYCOUNT); do
+        port=$(($STARTING_PORT + $idx - 1))
         echo "$PROXYUSER/$PROXYPASS/$IP4/$port/$IP6PREFIX:$(ip64):$(ip64):$(ip64):$(ip64)"
     done
 }
