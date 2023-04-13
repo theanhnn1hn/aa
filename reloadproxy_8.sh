@@ -134,7 +134,8 @@ IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
 FIRST_PORT=23000
-LAST_PORT=23200
+NUM_PROXIES=$1
+LAST_PORT=$((FIRST_PORT + NUM_PROXIES - 1))
 
 # Tại cuối script, thêm các hàm mới vào quá trình thực thi
 remove_old_proxies
