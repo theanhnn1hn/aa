@@ -102,12 +102,8 @@ upload_proxy() {
 	
 }
 gen_data() {
-    local count=0
-    while [ $count -lt $NUM_PROXIES ]
-    do
-        local port=$((FIRST_PORT + count))
+    seq $FIRST_PORT $LAST_PORT | while read port; do
         echo "yag/anhbiencong/$IP4/$port/$(gen64 $IP6)"
-        count=$((count + 1))
     done
 }
 
@@ -139,7 +135,7 @@ echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
 FIRST_PORT=23000
 NUM_PROXIES=$1
-LAST_PORT=$((FIRST_PORT + NUM_PROXIES - 1))
+LAST_PORT=$((FIRST_PORT + NUM_PROXIES))
 
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
