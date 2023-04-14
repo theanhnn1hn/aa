@@ -8,6 +8,23 @@ if [ -d "$WORKDIR" ]; then
     echo "Removing old working directory..."
     rm -rf "$WORKDIR"
 fi
+# Remove old data
+OLD_WORKDIR="/home/proxy-installer"
+if [ -d "$OLD_WORKDIR" ]; then
+    rm -rf $OLD_WORKDIR
+fi
+# Remove old 3proxy config
+if [ -f "/usr/local/etc/3proxy/3proxy.cfg" ]; then
+    rm /usr/local/etc/3proxy/3proxy.cfg
+fi
+
+# Remove old boot scripts
+if [ -f "${WORKDIR}/boot_iptables.sh" ]; then
+    rm ${WORKDIR}/boot_iptables.sh
+fi
+if [ -f "${WORKDIR}/boot_ifconfig.sh" ]; then
+    rm ${WORKDIR}/boot_ifconfig.sh
+fi
 
 # Remove old 3proxy configuration file
 if [ -f "$THREE_PROXY_CONFIG" ]; then
