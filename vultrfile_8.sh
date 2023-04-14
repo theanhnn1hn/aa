@@ -1,5 +1,4 @@
 #!/bin/sh
-# Variables
 get_network_interface() {
   ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'
 }
@@ -119,11 +118,9 @@ IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
-echo "How many proxy do you want to create? Example 500"
-read NUM_PROXIES
-
 FIRST_PORT=23000
-LAST_PORT=$((FIRST_PORT + NUM_PROXIES))
+NUM_PROXIES=$1
+LAST_PORT=$((FIRST_PORT + NUM_PROXIES - 1))
 
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
