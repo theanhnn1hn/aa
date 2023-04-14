@@ -102,8 +102,12 @@ upload_proxy() {
 	
 }
 gen_data() {
-    seq $FIRST_PORT $LAST_PORT | while read port; do
+    local count=0
+    while [ $count -lt $NUM_PROXIES ]
+    do
+        local port=$((FIRST_PORT + count))
         echo "yag/anhbiencong/$IP4/$port/$(gen64 $IP6)"
+        count=$((count + 1))
     done
 }
 
