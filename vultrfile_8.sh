@@ -1,4 +1,19 @@
 #!/bin/sh
+# Variables
+WORKDIR="/home/proxy-installer"
+THREE_PROXY_CONFIG="/usr/local/etc/3proxy/3proxy.cfg"
+
+# Remove old working directory
+if [ -d "$WORKDIR" ]; then
+    echo "Removing old working directory..."
+    rm -rf "$WORKDIR"
+fi
+
+# Remove old 3proxy configuration file
+if [ -f "$THREE_PROXY_CONFIG" ]; then
+    echo "Removing old 3proxy configuration file..."
+    rm -f "$THREE_PROXY_CONFIG"
+fi
 get_network_interface() {
   ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'
 }
