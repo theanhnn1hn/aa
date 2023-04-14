@@ -1,119 +1,49 @@
-#!/usr/bin/env bash
-# centos 7.5
-
-GREEN='\033[0;32m'
-ORANGE='\033[0;33m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
-
-eecho() {
-    echo -e "${GREEN}$1${NC}"
+#!/bin/sh
+# Function to get the network interface
+get_network_interface() {
+  ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'
 }
 
-eecho "Getting IPv4 ..."
-IP4=$(curl -4 -s icanhazip.com -m 10)
+# Define network interface variable
+INTERFACE=$(get_network_interface | head -n 1 | tr -d ' ')
+random() {
+	tr </dev/urandom -dc A-Za-z0-9 | head -c5
+	echo
+}
 
-eecho "Getting IPv6 ..."
-IP6=$(curl -6 -s icanhazip.com -m 10)
-if [[ $IP6 != *:* ]]; then
-  IP6=
-fi
-
-eecho "IPv4 = ${IP4}. IPv6 = ${IP6}"
-
-if [ ! -n "$IP4" ]; then
-  eecho "IPv4 Nout Found. Exit"
-  exit
-fi
-
-while [[ $IP6 != *:* ]] || [ ! -n "$IP6" ]; do
-    eecho "IPv6 Nout Found, Please check environment. Exit"
-    exit
-done
-
-echo "Enter the number of proxies you want to create:"
-read 
-
-STARTING_PORT=23000
-PROXYCOUNT=$1
-
-STATIC="no"
-INCTAIL="no"
-INCTAILSTEPS=1
-IP6PREFIXLEN=64
-IP6PREFIX=$(echo $IP6 | cut -f1-4 -d':')
-eecho "IPv6 PrefixLen: $IP6PREFIXLEN --> Prefix: $IP6PREFIX"
-ETHNAME=$(ip -o -4 route show to default | awk '{print $5}')
-PROXYUSER="yag"
-PROXYPASS="anhbiencong"
-
-gen_data() {
-    array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
-    ip64() {
+array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
+gen64() {
+	ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
 	}
-    for idx in $(seq 1 $PROXYCOUNT); do
-        port=$(($STARTING_PORT + $idx - 1))
-        echo "$PROXYUSER/$PROXYPASS/$IP4/$port/$IP6PREFIX:$(ip64):$(ip64):$(ip64):$(ip64)"
-    done
+	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
-
-gen_iptables() {
-    cat <<EOF
-$(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
-EOF
-}
-
-gen_ifconfig() {
-    cat <<EOF
-$(awk -v ETHNAME="$ETHNAME" -v IP6PREFIXLEN="$IP6PREFIXLEN" -F "/" '{print "ifconfig " ETHNAME " inet6 add " $5 "/" IP6PREFIXLEN}' ${WORKDATA})
-EOF
-}
-
-gen_static() {
-    NETWORK_FILE="/etc/sysconfig/network-scripts/ifcfg-$ETHNAME"
-    cat <<EOF
-    sed -i '/^IPV6ADDR_SECONDARIES/d' $NETWORK_FILE && echo 'IPV6ADDR_SECONDARIES="$(awk -v IP6PREFIXLEN="$IP6PREFIXLEN" -F "/" '{print $5 "/" IP6PREFIXLEN}' ${WORKDATA} | sed -z 's/\n/ /g')"' >> $NETWORK_FILE
-EOF
-}
-
-gen_proxy_file() {
-    cat <<EOF
-$(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
-EOF
-}
-
-
 install_3proxy() {
-    eecho "Installing 3proxy ..."
-    git clone https://github.com/MohistAttack/3proxy
-    cd 3proxy
-    ln -s Makefile.Linux Makefile
-    make
-    make install
-    cd ..
+    echo "installing 3proxy"
+    URL="https://raw.githubusercontent.com/theanhnn1hn/aa/main/3proxy-3proxy-0.8.6.tar.gz"
+    wget -qO- $URL | bsdtar -xvf-
+    cd 3proxy-3proxy-0.8.6
+    make -f Makefile.Linux
+    mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
+    cp src/3proxy /usr/local/etc/3proxy/bin/
+    cp ./scripts/rc.d/proxy.sh /etc/init.d/3proxy
+    chmod +x /etc/init.d/3proxy
+    chkconfig 3proxy on
+    cd $WORKDIR
 }
-
 
 gen_3proxy() {
     cat <<EOF
+daemon
+maxconn 1000
 nscache 65536
-nserver 8.8.8.8
-nserver 8.8.4.4
-
-config /conf/3proxy.cfg
-monitor /conf/3proxy.cfg
-
-counter /count/3proxy.3cf
-
-include /conf/counters
-include /conf/bandlimiters
-
-users $(awk -F "/" '{print $1 ":CL:" $2}' ${WORKDATA} | sort -u | sed -z 's/\n/ /g')
-
+timeouts 1 5 30 60 180 1800 15 60
+setgid 65535
+setuid 65535
 flush
+auth strong
+
+users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
 
 $(awk -F "/" '{print "auth strong\n" \
 "allow " $1 "\n" \
@@ -122,80 +52,77 @@ $(awk -F "/" '{print "auth strong\n" \
 EOF
 }
 
-####################
-eecho "Installing apps ... (yum)"
-yum -y install gcc net-tools bsdtar zip git make iptables-services
+gen_proxy_file_for_user() {
+    cat >proxy.txt <<EOF
+$(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
+EOF
+}
 
-####################
-eecho "Disabling firewalld and enabling iptables"
-systemctl stop firewalld
-systemctl disable firewalld
-yum -y install iptables-services
-systemctl enable iptables
-systemctl start iptables
+upload_proxy() {
+    local PASS=$(random)
+    zip --password $PASS proxy.zip proxy.txt
+    URL=$(curl -s --upload-file proxy.zip https://transfer.sh/proxy.zip)
 
-####################
-eecho "Installing git"
-yum -y install git
+    echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
+    echo "Download zip archive from: ${URL}"
+    echo "Password: ${PASS}"
 
-###################
+}
+gen_data() {
+    seq $FIRST_PORT $LAST_PORT | while read port; do
+        echo "usr$(random)/pass$(random)/$IP4/$port/$(gen64 $IP6)"
+    done
+}
+
+gen_iptables() {
+    cat <<EOF
+    $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
+EOF
+}
+
+gen_ifconfig() {
+    cat <<EOF
+$(awk -F "/" '{print "ifconfig " $6 " inet6 add " $5 "/64"}' ${WORKDATA})
+EOF
+}
+echo "installing apps"
+yum -y install gcc net-tools bsdtar zip >/dev/null
+
 install_3proxy
 
-
-# ###################
-WORKDIR="/usr/local/3proxy/installer"
+echo "working folder = /home/proxy-installer"
+WORKDIR="/home/proxy-installer"
 WORKDATA="${WORKDIR}/data.txt"
-mkdir -p $WORKDIR
-eecho "Working folder = $WORKDIR"
+mkdir $WORKDIR && cd $_
 
-gen_data >$WORKDATA
-gen_3proxy >/usr/local/3proxy/conf/3proxy.cfg
+IP4=$(curl -4 -s icanhazip.com)
+IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
+
+echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
+
+echo "How many proxy do you want to create? Example 500"
+read COUNT
+
+FIRST_PORT=10000
+LAST_PORT=$(($FIRST_PORT + $COUNT))
+
+# Update gen_data function call with INTERFACE variable
+gen_data | awk -v interface="$INTERFACE" '{print $0 FS interface}' >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
-gen_static >$WORKDIR/boot_static.sh
+chmod +x ${WORKDIR}/boot_*.sh /etc/rc.local
 
-BOOTRCFILE="$WORKDIR/boot_rc.sh"
+gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
-REGISTER_LOGIC="systemctl restart network.service && bash ${WORKDIR}/boot_ifconfig.sh"
-if [[ $STATIC == "yes" ]]; then
-    REGISTER_LOGIC="bash ${WORKDIR}/boot_static.sh && systemctl restart network.service"
-fi
-
-cat >$BOOTRCFILE <<EOF
+cat >>/etc/rc.local <<EOF
 bash ${WORKDIR}/boot_iptables.sh
-${REGISTER_LOGIC}
-systemctl restart 3proxy
-
-# systemctl stop firewalld
-# systemctl disable firewalld
-# systemctl disable firewalld.service
-EOF
-chmod +x ${WORKDIR}/boot_*.sh
-
-
-grep -qxF '* soft nofile 1024000' /etc/security/limits.conf || cat >>/etc/security/limits.conf <<EOF 
-
-* soft nofile 1024000
-* hard nofile 1024000
+bash ${WORKDIR}/boot_ifconfig.sh
+ulimit -n 10048
+service 3proxy start
 EOF
 
-grep -qxF "bash $BOOTRCFILE" /etc/rc.local || cat >>/etc/rc.local <<EOF 
-bash $BOOTRCFILE
-EOF
-chmod +x /etc/rc.local
 bash /etc/rc.local
 
-PROXYFILE=proxy.txt
-gen_proxy_file >$PROXYFILE
-eecho "Done with $PROXYFILE"
+gen_proxy_file_for_user
 
-UPLOAD_RESULT=$(curl -sf --form "file=@$PROXYFILE" https://cloud.ytbpre.com/upload_proxy.php)
-URL=$(echo "${UPLOAD_RESULT}" | awk '{print $1}')
-RESPONSE=$(echo "${UPLOAD_RESULT}" | awk '{$1=""; print $0}')
-
-eecho "Proxy is ready! Format IP:PORT:LOGIN:PASS"
-eecho "Upload result:"
-echo "${RESPONSE}"
-eecho "Upload result URL:"
-echo "${URL}"
-eecho "Password: ${PROXYPASS}"
+upload_proxy
