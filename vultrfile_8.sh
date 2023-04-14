@@ -4,7 +4,6 @@ get_network_interface() {
 }
 
 INTERFACE=$(get_network_interface | head -n 1 | tr -d ' ')
-#!/bin/sh
 random() {
 	tr </dev/urandom -dc A-Za-z0-9 | head -c5
 	echo
@@ -118,9 +117,12 @@ IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
-echo "How many proxy do you want to create? Example 500"	
-read COUNT	
-FIRST_PORT=23000	
+COUNT=$1
+if [ -z "$COUNT" ]; then
+    echo "How many proxy do you want to create? Example 500"    
+    read COUNT
+fi
+FIRST_PORT=23000    
 LAST_PORT=$(($FIRST_PORT + $COUNT))
 
 gen_data >$WORKDIR/data.txt
