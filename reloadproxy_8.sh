@@ -4,6 +4,7 @@ get_network_interface() {
 }
 
 INTERFACE=$(get_network_interface | head -n 1 | tr -d ' ')
+# Định nghĩa các hàm từ script ban đầu
 random() {
     tr </dev/urandom -dc A-Za-z0-9 | head -c5
     echo
@@ -16,58 +17,26 @@ gen64() {
     }
     echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
-
-# Thêm hàm để xóa proxy cũ
-remove_old_proxies() {
-    echo "Removing old proxies..."
-    iptables-save | grep -v "tcp dpt" | iptables-restore
-    systemctl stop 3proxy
-    rm -f /usr/local/etc/3proxy/3proxy.cfg
+# Thêm các hàm gen_data và gen_ifconfig từ script gốc
+gen_data() {
+    seq $FIRST_PORT $LAST_PORT | while read port; do
+        echo "$(random)/$(random)/$IP4/$port/$(gen64 $IP6)"
+    done
 }
 
-# Thêm hàm để khởi động lại 3proxy
-restart_3proxy() {
-    echo "Restarting 3proxy..."
-    systemctl start 3proxy
+gen_ifconfig() {
+    cat <<EOF
+$(awk -F "/" '{print "ifconfig ${INTERFACE} inet6 add " $5 "/64"}' ${WORKDATA})
+EOF
 }
-
-install_3proxy() {
-    echo "installing 3proxy"
-    mkdir -p /3proxy
-    cd /3proxy
-    URL="https://github.com/z3APA3A/3proxy/archive/0.9.3.tar.gz"
-    wget -qO- $URL | bsdtar -xvf-
-    cd 3proxy-0.9.3
-    make -f Makefile.Linux
-    mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
-    mv /3proxy/3proxy-0.9.3/bin/3proxy /usr/local/etc/3proxy/bin/
-    wget https://raw.githubusercontent.com/xlandgroup/ipv4-ipv6-proxy/master/scripts/3proxy.service-Centos8 --output-document=/3proxy/3proxy-0.9.3/scripts/3proxy.service2
-    cp /3proxy/3proxy-0.9.3/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
-    systemctl link /usr/lib/systemd/system/3proxy.service
-    systemctl daemon-reload
-#    systemctl enable 3proxy
-    echo "* hard nofile 999999" >>  /etc/security/limits.conf
-    echo "* soft nofile 999999" >>  /etc/security/limits.conf
-    echo "net.ipv6.conf.${INTERFACE}.proxy_ndp=1" >> /etc/sysctl.conf
-    echo "net.ipv6.conf.all.proxy_ndp=1" >> /etc/sysctl.conf
-    echo "net.ipv6.conf.default.forwarding=1" >> /etc/sysctl.conf
-    echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
-    echo "net.ipv6.ip_nonlocal_bind = 1" >> /etc/sysctl.conf
-    sysctl -p
-    systemctl stop firewalld
-    systemctl disable firewalld
-
-    cd $WORKDIR
-}
-
 gen_3proxy() {
     cat <<EOF
 daemon
-maxconn 3000
+maxconn 2000
 nserver 1.1.1.1
-nserver 1.0.0.1
-nserver 2606:4700:4700::64
-nserver 2606:4700:4700::6400
+nserver 8.8.4.4
+nserver 2001:4860:4860::8888
+nserver 2001:4860:4860::8844
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
@@ -88,75 +57,29 @@ gen_proxy_file_for_user() {
 $(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
 EOF
 }
-
-upload_proxy() {
-    cd $WORKDIR
-    local PASS=$(random)
-    zip --password $PASS proxy.zip proxy.txt
-    URL=$(curl -s --upload-file proxy.zip https://transfer.sh/proxy.zip)
-    #curl -F proxy=@proxy.txt http://sv1.ytbpre.com/wp-content/plugins/ytautogroup/upload_proxy.php
-    echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
-    echo "Download zip archive from: ${URL}"
-    echo "Password: ${PASS}"
-    #curl -v -F "chat_id=956415922" -F document=@proxy.txt https://api.telegram.org/5418191856:AAGHG6-QnHHFUAV7ouaty6I9ISThDLJdjc0/sendDocument
-	
-}
-gen_data() {
-    seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "yag/anhbiencong/$IP4/$port/$(gen64 $IP6)"
-    done
-}
-
-gen_iptables() {
-    cat <<EOF
-    $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
-EOF
-}
-
-gen_ifconfig() {
-    cat <<EOF
-$(awk -F "/" '{print "ifconfig ${INTERFACE} inet6 add " $5 "/64"}' ${WORKDATA})
-EOF
-}
-echo "installing apps"
-yum -y install gcc net-tools bsdtar zip make >/dev/null
-
-install_3proxy
-
-echo "working folder = /home/proxy-installer"
+# Phần thực thi của script mới
 WORKDIR="/home/proxy-installer"
 WORKDATA="${WORKDIR}/data.txt"
-mkdir $WORKDIR && cd $_
-
 IP4=$(curl -4 -s icanhazip.com)
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
-echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
+# Đọc số lượng proxy từ dòng đầu tiên của data.txt
+COUNT=$(cat ${WORKDATA} | wc -l)
+FIRST_PORT=23000    
+LAST_PORT=$(($FIRST_PORT + $COUNT))
 
-FIRST_PORT=23000
-NUM_PROXIES=$1
-LAST_PORT=$((FIRST_PORT + NUM_PROXIES - 1))
-
-# Tại cuối script, thêm các hàm mới vào quá trình thực thi
-remove_old_proxies
+# Tạo lại IPv6 cho proxy
 gen_data >$WORKDIR/data.txt
-gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
-chmod +x $WORKDIR/boot_*.sh /etc/rc.local
+chmod +x $WORKDIR/boot_ifconfig.sh
 
+# Cập nhật cấu hình 3proxy
 gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
-cat >>/etc/rc.local <<EOF
-systemctl start NetworkManager.service
-ifup ${INTERFACE}
-bash ${WORKDIR}/boot_iptables.sh
+# Khởi động lại 3proxy và cấu hình IPv6 mới
+systemctl stop 3proxy
 bash ${WORKDIR}/boot_ifconfig.sh
-ulimit -n 65535
-/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg &
-EOF
+systemctl start 3proxy
 
-bash /etc/rc.local
-restart_3proxy
-
+# Xuất thông tin proxy mới
 gen_proxy_file_for_user
-upload_proxy
