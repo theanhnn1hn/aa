@@ -1,17 +1,12 @@
 #!/bin/sh
-# Function to get the network interface
-get_network_interface() {
-  ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'
-}
-
-# Define network interface variable
-INTERFACE=$(get_network_interface | head -n 1 | tr -d ' ')
 random() {
 	tr </dev/urandom -dc A-Za-z0-9 | head -c5
 	echo
 }
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
+main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
+
 gen64() {
 	ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
@@ -58,19 +53,10 @@ $(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
 EOF
 }
 
-upload_proxy() {
-    local PASS=$(random)
-    zip --password $PASS proxy.zip proxy.txt
-    URL=$(curl -s --upload-file proxy.zip https://transfer.sh/proxy.zip)
 
-    echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
-    echo "Download zip archive from: ${URL}"
-    echo "Password: ${PASS}"
-
-}
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "usr$(random)/pass$(random)/$IP4/$port/$(gen64 $IP6)"
+        echo "yag/anhbiencong/$IP4/$port/$(gen64 $IP6)"
     done
 }
 
@@ -82,7 +68,7 @@ EOF
 
 gen_ifconfig() {
     cat <<EOF
-$(awk -F "/" '{print "ifconfig " $6 " inet6 add " $5 "/64"}' ${WORKDATA})
+$(awk -F "/" '{print "ifconfig '$main_interface' inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
 echo "installing apps"
@@ -98,16 +84,15 @@ mkdir $WORKDIR && cd $_
 IP4=$(curl -4 -s icanhazip.com)
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
-echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
+if [ -z "$1" ]; then
+    echo "Usage: $0 <number_of_proxies>"
+    exit 1
+fi
+num_proxies=$1
+FIRST_PORT=23000
+LAST_PORT=$(($FIRST_PORT + $num_proxies - 1))
 
-echo "How many proxy do you want to create? Example 500"
-read COUNT
-
-FIRST_PORT=10000
-LAST_PORT=$(($FIRST_PORT + $COUNT))
-
-# Update gen_data function call with INTERFACE variable
-gen_data | awk -v interface="$INTERFACE" '{print $0 FS interface}' >$WORKDIR/data.txt
+gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
 chmod +x ${WORKDIR}/boot_*.sh /etc/rc.local
@@ -124,5 +109,3 @@ EOF
 bash /etc/rc.local
 
 gen_proxy_file_for_user
-
-upload_proxy
