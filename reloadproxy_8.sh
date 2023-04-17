@@ -15,11 +15,11 @@ gen64() {
 sed -i '/inet6/d' $WORKDIR/boot_ifconfig.sh
 
 # Remove all existing IPv6 addresses from the main network interface
-#ip -6 addr flush dev "$main_interface"
+ip -6 addr flush dev "$main_interface"
 
 # Generate new IPv6 addresses
 gen_data() {
-    seq 1 $num_ipv6 | while read count; do
+    for i in $(seq 1 $num_ipv6); do
         echo "$(gen64 $(curl -6 -s icanhazip.com | cut -f1-4 -d':'))"
     done
 }
@@ -28,7 +28,7 @@ gen_data > $WORKDIR/data.txt
 # Add the new IPv6 addresses to the interface
 gen_ifconfig() {
     cat <<EOF
-$(awk -F "/" '{print "ifconfig '$main_interface' inet6 add " $1 "/64"}' ${WORKDATA})
+$(awk -F "/" '{print "ifconfig '$main_interface' inet6 add " $1 "/64"}' ${WORKDIR}/data.txt)
 EOF
 }
 gen_ifconfig > $WORKDIR/boot_ifconfig.sh
