@@ -1,57 +1,35 @@
 #!/bin/sh
-main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
-WORKDIR="/home/proxy-installer"
-
-# Tạo thư mục làm việc nếu chưa tồn tại hoặc xóa nội dung cũ nếu đã tồn tại
-if [ -d "$WORKDIR" ]; then
-  rm -rf ${WORKDIR:?}/*
-else
-  mkdir -p $WORKDIR
-fi
-
-# Xóa các cài đặt trước đó
-systemctl stop 3proxy
-systemctl disable 3proxy
-rm -rf /3proxy
-rm -rf /usr/local/etc/3proxy
-rm -f /usr/lib/systemd/system/3proxy.service
-rm -f /etc/sysconfig/network-scripts/ifcfg-${main_interface}
-sed -i '/systemctl start NetworkManager.service/d' /etc/rc.local
-sed -i '/ifup ${main_interface}/d' /etc/rc.local
-sed -i '/bash ${WORKDIR}\/boot_iptables.sh/d' /etc/rc.local
-sed -i '/bash ${WORKDIR}\/boot_ifconfig.sh/d' /etc/rc.local
-sed -i '/ulimit -n 65535/d' /etc/rc.local
-sed -i '/\/usr\/local\/etc\/3proxy\/bin\/3proxy \/usr\/local\/etc\/3proxy\/3proxy.cfg \&/d' /etc/rc.local
-
-# Xóa tất cả các quy tắc iptables
-iptables -F
-iptables -X
-iptables -t nat -F
-iptables -t nat -X
-iptables -t mangle -F
-iptables -t mangle -X
-iptables -P INPUT ACCEPT
-iptables -P FORWARD ACCEPT
-iptables -P OUTPUT ACCEPT
-iptables -F INPUT
-
-# Xóa các địa chỉ IPv6 cũ trên giao diện mạng
-ip -6 addr show dev $main_interface | grep -v -E '^    ' | awk '{print $2}' | xargs -I {} ip -6 addr del {} dev $main_interface
-
-# Tiếp tục cài đặt và cấu hình 3proxy như trước đây
 
 random() {
-	tr </dev/urandom -dc A-Za-z0-9 | head -c5
-	echo
+    tr </dev/urandom -dc A-Za-z0-9 | head -c5
+    echo
 }
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
+main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
 
 gen64() {
-	ip64() {
-		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
-	}
-	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
+    ip64() {
+        echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
+    }
+    echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
+}
+
+# Hàm này sẽ xóa các cài đặt cũ của 3proxy và cài đặt lại 3proxy
+reset_3proxy() {
+    # Dừng dịch vụ 3proxy
+    systemctl stop 3proxy
+
+    # Xóa thư mục cài đặt hiện tại của 3proxy
+    rm -rf /usr/local/etc/3proxy
+
+    # Xóa các cấu hình iptables liên quan đến 3proxy
+    iptables-save | grep -v "3proxy" | iptables-restore
+
+    # Xóa các địa chỉ IPv6 đã thêm trước đó
+    while read -r line; do
+        ifconfig "$main_interface" inet6 del "$line"/64
+    done < /home/proxy-installer/boot_ifconfig.sh
 }
 
 install_3proxy() {
@@ -134,7 +112,7 @@ EOF
 
 echo "installing apps"
 yum -y install gcc net-tools bsdtar zip make >/dev/null
-
+reset_3proxy
 install_3proxy
 
 if [ -z "$1" ]; then
