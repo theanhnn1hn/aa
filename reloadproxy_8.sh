@@ -22,7 +22,7 @@ add_new_ipv6_addresses() {
   # Generate new IPv6 addresses for the proxies
   for i in $(seq 1 "$1"); do
     ipv6_addr=$(gen64 "$IP6")
-    ip -6 addr add "$ipv6_addr/64" dev "$main_interface" || true
+    ip -6 addr add "${ipv6_addr}/64" dev "$main_interface" || true
   done
 }
 
