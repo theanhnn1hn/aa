@@ -23,6 +23,10 @@ clean_previous_installation() {
     sed -i '/^bash \/home\/proxy-installer\/boot_.*\.sh$/d' /etc/rc.local
     sed -i '/^ulimit -n 10048$/d' /etc/rc.local
     sed -i '/^service 3proxy start$/d' /etc/rc.local
+
+    # Thêm vào đây để xóa quy tắc iptables cũ và cấu hình IP
+    iptables-save | grep -v "dport $FIRST_PORT:$LAST_PORT" | iptables-restore
+    ip -6 addr flush dev $main_interface
 }
 install_3proxy() {
     echo "installing 3proxy"
