@@ -106,11 +106,11 @@ EOF
 }
 
 gen_ifconfig() {
-    #remove_existing_ipv6_addresses
     cat <<EOF
-$(awk -F "/" '{print "ip -6 addr show dev '$main_interface' | grep -q " $5 " || ip -6 addr add " $5 "/64 dev '$main_interface'"}' ${WORKDATA})
+$(awk -F "/" '{print "ip -6 addr add -f " $5 "/64 dev '$main_interface'"}' ${WORKDATA})
 EOF
 }
+
 
 echo "installing apps"
 yum -y install gcc net-tools bsdtar zip make >/dev/null
