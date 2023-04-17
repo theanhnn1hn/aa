@@ -1,6 +1,7 @@
 #!/bin/sh
 main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
 WORKDIR="/home/proxy-installer"
+
 # Xóa các cài đặt trước đó
 systemctl stop 3proxy
 systemctl disable 3proxy
@@ -9,7 +10,7 @@ rm -rf /usr/local/etc/3proxy
 rm -f /usr/lib/systemd/system/3proxy.service
 rm -f /etc/sysconfig/network-scripts/ifcfg-${main_interface}
 sed -i '/systemctl start NetworkManager.service/d' /etc/rc.local
-sed -i '/# ifup ${main_interface}/d' /etc/rc.local
+sed -i '/ifup ${main_interface}/d' /etc/rc.local
 sed -i '/bash ${WORKDIR}\/boot_iptables.sh/d' /etc/rc.local
 sed -i '/bash ${WORKDIR}\/boot_ifconfig.sh/d' /etc/rc.local
 sed -i '/ulimit -n 65535/d' /etc/rc.local
@@ -20,14 +21,12 @@ iptables -F
 iptables -X
 iptables -t nat -F
 iptables -t nat -X
-iptables -t nat -F PREROUTING
 iptables -t mangle -F
 iptables -t mangle -X
 iptables -P INPUT ACCEPT
 iptables -P FORWARD ACCEPT
 iptables -P OUTPUT ACCEPT
 iptables -F INPUT
-iptables -D INPUT -p tcp --match multiport --dports $FIRST_PORT:$LAST_PORT -m state --state NEW -j ACCEPT
 
 # Xóa các địa chỉ IPv6 cũ trên giao diện mạng
 ip -6 addr show dev $main_interface | grep -v -E '^    ' | awk '{print $2}' | xargs -I {} ip -6 addr del {} dev $main_interface
