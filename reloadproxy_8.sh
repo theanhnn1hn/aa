@@ -23,6 +23,7 @@ add_new_ipv6_addresses() {
   for i in $(seq 1 "$1"); do
     ipv6_addr=$(gen64 "$IP6")
     ip -6 addr add "$ipv6_addr"/64 dev "$main_interface" || true
+    echo "Added new IPv6 address: $ipv6_addr"
   done
 }
 
@@ -43,3 +44,13 @@ remove_existing_ipv6_addresses
 
 # Add new IPv6 addresses for the proxies
 add_new_ipv6_addresses "$1"
+
+# Remove existing IPv6 addresses from boot_ifconfig.sh
+sed -i '/inet6/d' /home/proxy-installer/boot_ifconfig.sh
+
+# Add new IPv6 addresses to boot_ifconfig.sh
+ipv6_list=$(ip -6 addr show dev "$main_interface" | grep -Po '(?<=inet6 )[^\s]+')
+while read ipv6; do
+  echo "ifconfig $main_interface inet6 add $ipv6/64" >> /home/proxy-installer/boot_ifconfig.sh
+  echo "Added $ipv6 to boot_ifconfig.sh"
+done <<< "$ipv6_list"
