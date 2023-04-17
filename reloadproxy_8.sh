@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Define the gen64 function
+array=(0 1 2 3 4 5 6 7 8 9 a b c d e f)
+
+gen64() {
+  ipv6_addr="$1"
+  for i in {1..4}; do
+    ipv6_addr="$ipv6_addr:${array[RANDOM % 16]}${array[RANDOM % 16]}${array[RANDOM % 16]}${array[RANDOM % 16]}"
+  done
+  echo "$ipv6_addr"
+}
+
 # Function to generate a random string
 random_string() {
   tr </dev/urandom -dc A-Za-z0-9 | head -c5
@@ -25,18 +36,6 @@ add_new_ipv6_addresses() {
     ip -6 addr add "$ipv6_addr"/64 dev "$main_interface" || true
     echo "Added new IPv6 address: $ipv6_addr"
   done
-}
-
-# Array of hexadecimal characters for generating IPv6 addresses
-array=(0 1 2 3 4 5 6 7 8 9 a b c d e f)
-
-# Function to generate a random IPv6 address
-gen64() {
-  ipv6_addr="$1"
-  for i in {1..4}; do
-    ipv6_addr="$ipv6_addr:${array[RANDOM % 16]}${array[RANDOM % 16]}${array[RANDOM % 16]}${array[RANDOM % 16]}"
-  done
-  echo "$ipv6_addr"
 }
 
 # Remove all existing IPv6 addresses
