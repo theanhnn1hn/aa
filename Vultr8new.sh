@@ -27,6 +27,7 @@ iptables -P INPUT ACCEPT
 iptables -P FORWARD ACCEPT
 iptables -P OUTPUT ACCEPT
 iptables -F INPUT
+iptables -D INPUT -p tcp --match multiport --dports $FIRST_PORT:$LAST_PORT -m state --state NEW -j ACCEPT
 
 # Xóa các địa chỉ IPv6 cũ trên giao diện mạng
 ip -6 addr flush dev $main_interface
@@ -115,15 +116,16 @@ gen_data() {
 
 gen_iptables() {
     cat <<EOF
-    $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
+iptables -I INPUT -p tcp --match multiport --dports $FIRST_PORT:$LAST_PORT -m state --state NEW -j ACCEPT
 EOF
 }
 
 gen_ifconfig() {
     cat <<EOF
-$(awk -F "/" '{print "ifconfig '$main_interface' inet6 add " $5 "/64"}' ${WORKDATA})
+$(awk -F "/" '{print "ip -6 addr show dev '$main_interface' | grep -q " $5 " || ifconfig '$main_interface' inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
+
 echo "installing apps"
 yum -y install gcc net-tools bsdtar zip make >/dev/null
 
