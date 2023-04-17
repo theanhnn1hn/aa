@@ -27,7 +27,7 @@ add_new_ipv6_addresses() {
     ipv6_addr=$(printf "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x" \
         "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" \
         "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}")
-    ip -6 addr add "$ipv6_addr/64" dev "$main_interface"
+    ip -6 addr add "$ipv6_addr/64" dev "$main_interface" || true
   done
 }
 
