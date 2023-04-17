@@ -24,7 +24,9 @@ remove_existing_ipv6_addresses() {
 add_new_ipv6_addresses() {
   # Generate new IPv6 addresses for the proxies
   for i in $(seq 1 "$1"); do
-    ipv6_addr=$(printf "%04x:%04x:%04x:%04x" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}")
+    ipv6_addr=$(printf "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x" \
+        "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" \
+        "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}")
     ip -6 addr add "$ipv6_addr/64" dev "$main_interface"
   done
 }
