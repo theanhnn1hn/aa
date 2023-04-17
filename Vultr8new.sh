@@ -74,9 +74,6 @@ install_3proxy() {
     cd $WORKDIR
 }
 
-systemctl enable 3proxy
-systemctl start 3proxy
-
 gen_3proxy() {
     cat <<EOF
 daemon
@@ -153,11 +150,12 @@ LAST_PORT=$(($FIRST_PORT + $num_proxies - 1))
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
-echo NM_CONTROLLED="no" >> /etc/sysconfig/network-scripts/ifcfg-${main_interface}
+#echo NM_CONTROLLED="no" >> /etc/sysconfig/network-scripts/ifcfg-${main_interface}
 chmod +x $WORKDIR/boot_*.sh /etc/rc.local
 
 gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
-
+systemctl enable 3proxy
+systemctl start 3proxy
 cat >>/etc/rc.local <<EOF
 systemctl start NetworkManager.service
 ifup ${main_interface}
