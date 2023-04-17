@@ -11,10 +11,7 @@ main_interface=$(ip route get 8.8.8.8 | awk '{printf $5}')
 
 # Function to remove all existing IPv6 addresses from the main network interface
 remove_existing_ipv6_addresses() {
-  existing_ipv6_addresses=$(ip -6 addr show dev "$main_interface" | grep 'inet6' | awk '{print $2}')
-  for addr in $existing_ipv6_addresses; do
-    ip -6 addr del "${addr%/*}" dev "$main_interface"
-  done
+  ip -6 addr flush dev "$main_interface"
 }
 
 # Function to add new IPv6 addresses to the main network interface
@@ -29,15 +26,6 @@ add_new_ipv6_addresses() {
   done
 }
 
-# Function to delete old IPv6 addresses and add new ones
-delete_and_add_ipv6_addresses() {
-  # Remove all existing IPv6 addresses
-  remove_existing_ipv6_addresses
-
-  # Add new IPv6 addresses for the proxies
-  add_new_ipv6_addresses "$1"
-}
-
 # Array of hexadecimal characters for generating IPv6 addresses
 array=(0 1 2 3 4 5 6 7 8 9 a b c d e f)
 
@@ -50,5 +38,8 @@ gen64() {
   echo "$ipv6_addr"
 }
 
-# Delete old IPv6 addresses and add new ones
-delete_and_add_ipv6_addresses "$1"
+# Remove all existing IPv6 addresses
+remove_existing_ipv6_addresses
+
+# Add new IPv6 addresses for the proxies
+add_new_ipv6_addresses "$1"
