@@ -119,7 +119,7 @@ EOF
 
 gen_ifconfig() {
     cat <<EOF
-$(awk -F "/" '{print "ip -6 addr show dev '$main_interface' | grep -q " $5 " || ifconfig '$main_interface' inet6 add " $5 "/64"}' ${WORKDATA})
+$(awk -F "/" '{print "ip -6 addr show dev '$main_interface' | grep -q " $5 " || ip -6 addr add " $5 "/64 dev '$main_interface'"}' ${WORKDATA})
 EOF
 }
 
