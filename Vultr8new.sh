@@ -20,11 +20,13 @@ iptables -F
 iptables -X
 iptables -t nat -F
 iptables -t nat -X
+iptables -t nat -F PREROUTING
 iptables -t mangle -F
 iptables -t mangle -X
 iptables -P INPUT ACCEPT
 iptables -P FORWARD ACCEPT
 iptables -P OUTPUT ACCEPT
+iptables -F INPUT
 
 # Xóa các địa chỉ IPv6 cũ trên giao diện mạng
 ip -6 addr flush dev $main_interface
