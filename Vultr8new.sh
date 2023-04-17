@@ -2,6 +2,13 @@
 main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
 WORKDIR="/home/proxy-installer"
 
+# Tạo thư mục làm việc nếu chưa tồn tại hoặc xóa nội dung cũ nếu đã tồn tại
+if [ -d "$WORKDIR" ]; then
+  rm -rf ${WORKDIR:?}/*
+else
+  mkdir -p $WORKDIR
+fi
+
 # Xóa các cài đặt trước đó
 systemctl stop 3proxy
 systemctl disable 3proxy
