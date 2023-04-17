@@ -12,6 +12,11 @@ hex_chars=(0 1 2 3 4 5 6 7 8 9 a b c d e f)
 # Get the name of the main network interface
 main_interface=$(ip route get 8.8.8.8 | awk '{printf $5}')
 
+# Stop the 3proxy service if it's running
+if systemctl is-active --quiet 3proxy; then
+  systemctl stop 3proxy
+fi
+
 # Function to remove all existing IPv6 addresses from the main network interface
 remove_existing_ipv6_addresses() {
   existing_ipv6_addresses=$(ip -6 addr show dev "$main_interface" | grep 'inet6' | awk '{print $2}')
@@ -36,3 +41,6 @@ remove_existing_ipv6_addresses
 
 # Add new IPv6 addresses for the proxies
 add_new_ipv6_addresses "$1"
+
+# Start the 3proxy service
+systemctl start 3proxy
