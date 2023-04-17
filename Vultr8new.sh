@@ -30,7 +30,7 @@ iptables -F INPUT
 iptables -D INPUT -p tcp --match multiport --dports $FIRST_PORT:$LAST_PORT -m state --state NEW -j ACCEPT
 
 # Xóa các địa chỉ IPv6 cũ trên giao diện mạng
-ip -6 addr flush dev $main_interface
+ip -6 addr show dev $main_interface | grep -v -E '^    ' | awk '{print $2}' | xargs -I {} ip -6 addr del {} dev $main_interface
 
 random() {
 	tr </dev/urandom -dc A-Za-z0-9 | head -c5
