@@ -37,6 +37,13 @@ reset_3proxy() {
     fi
 }
 
+remove_existing_ipv6_addresses() {
+    existing_ipv6_addresses=$(ip -6 addr show dev "$main_interface" | grep 'inet6' | awk '{print $2}')
+    for addr in $existing_ipv6_addresses; do
+        ip -6 addr del "$addr" dev "$main_interface"
+    done
+}
+
 install_3proxy() {
     echo "installing 3proxy"
     mkdir -p /3proxy
@@ -108,7 +115,7 @@ gen_iptables() {
 iptables -I INPUT -p tcp --match multiport --dports $FIRST_PORT:$LAST_PORT -m state --state NEW -j ACCEPT
 EOF
 }
-
+remove_existing_ipv6_addresses
 gen_ifconfig() {
     cat <<EOF
 $(awk -F "/" '{print "ip -6 addr show dev '$main_interface' | grep -q " $5 " || ip -6 addr add " $5 "/64 dev '$main_interface'"}' ${WORKDATA})
