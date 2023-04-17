@@ -38,6 +38,8 @@ iptables -F INPUT
 # Xóa các địa chỉ IPv6 cũ trên giao diện mạng
 ip -6 addr show dev $main_interface | grep -v -E '^    ' | awk '{print $2}' | xargs -I {} ip -6 addr del {} dev $main_interface
 
+# Tiếp tục cài đặt và cấu hình 3proxy như trước đây
+
 random() {
 	tr </dev/urandom -dc A-Za-z0-9 | head -c5
 	echo
@@ -51,6 +53,7 @@ gen64() {
 	}
 	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
+
 install_3proxy() {
     echo "installing 3proxy"
     mkdir -p /3proxy
