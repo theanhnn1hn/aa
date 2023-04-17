@@ -25,8 +25,17 @@ add_new_ipv6_addresses() {
   # Generate new IPv6 addresses for the proxies
   for i in $(seq 1 "$1"); do
     ipv6_addr=$(gen64 "$IP6")
-    ifconfig "$main_interface" add "$ipv6_addr/64" up
+    ip -6 addr add "$ipv6_addr/64" dev "$main_interface" || true
   done
+}
+
+# Function to delete old IPv6 addresses and add new ones
+delete_and_add_ipv6_addresses() {
+  # Remove all existing IPv6 addresses
+  remove_existing_ipv6_addresses
+
+  # Add new IPv6 addresses for the proxies
+  add_new_ipv6_addresses "$1"
 }
 
 # Array of hexadecimal characters for generating IPv6 addresses
@@ -41,8 +50,5 @@ gen64() {
   echo "$ipv6_addr"
 }
 
-# Remove all existing IPv6 addresses
-remove_existing_ipv6_addresses
-
-# Add new IPv6 addresses for the proxies
-add_new_ipv6_addresses "$1"
+# Delete old IPv6 addresses and add new ones
+delete_and_add_ipv6_addresses "$1"
