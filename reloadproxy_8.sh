@@ -4,11 +4,13 @@ array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
 main_interface=$(ip route get 8.8.8.8 | awk '{printf $5}')
 
 gen64() {
-  ip64() {
-    echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
-  }
-  echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
+    ipv6_addr="$1"
+    for i in {1..4}; do
+        ipv6_addr="$ipv6_addr:${array[RANDOM % 16]}${array[RANDOM % 16]}${array[RANDOM % 16]}${array[RANDOM % 16]}"
+    done
+    echo "$ipv6_addr"
 }
+
 
 # Remove all existing IPv6 addresses from boot_ifconfig.sh
 sed -i '/inet6/d' /home/proxy-installer/boot_ifconfig.sh
