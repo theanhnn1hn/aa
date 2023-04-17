@@ -71,6 +71,9 @@ install_3proxy() {
     cd $WORKDIR
 }
 
+systemctl enable 3proxy
+systemctl start 3proxy
+
 gen_3proxy() {
     cat <<EOF
 daemon
