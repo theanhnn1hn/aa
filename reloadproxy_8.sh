@@ -6,16 +6,8 @@ random_string() {
   echo
 }
 
-# Array of hexadecimal characters for generating IPv6 addresses
-hex_chars=(0 1 2 3 4 5 6 7 8 9 a b c d e f)
-
 # Get the name of the main network interface
 main_interface=$(ip route get 8.8.8.8 | awk '{printf $5}')
-
-# Stop the 3proxy service if it's running
-if systemctl is-active --quiet 3proxy; then
-  systemctl stop 3proxy
-fi
 
 # Function to remove all existing IPv6 addresses from the main network interface
 remove_existing_ipv6_addresses() {
@@ -27,13 +19,26 @@ remove_existing_ipv6_addresses() {
 
 # Function to add new IPv6 addresses to the main network interface
 add_new_ipv6_addresses() {
+  # Get the current IPv6 prefix
+  IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
+
   # Generate new IPv6 addresses for the proxies
   for i in $(seq 1 "$1"); do
-    ipv6_addr=$(printf "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x" \
-        "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" \
-        "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}" "${hex_chars[RANDOM % 16]}")
+    ipv6_addr=$(gen64 "$IP6")
     ip -6 addr add "$ipv6_addr/64" dev "$main_interface" || true
   done
+}
+
+# Array of hexadecimal characters for generating IPv6 addresses
+array=(0 1 2 3 4 5 6 7 8 9 a b c d e f)
+
+# Function to generate a random IPv6 address
+gen64() {
+  ipv6_addr="$1"
+  for i in {1..4}; do
+    ipv6_addr="$ipv6_addr:${array[RANDOM % 16]}${array[RANDOM % 16]}${array[RANDOM % 16]}${array[RANDOM % 16]}"
+  done
+  echo "$ipv6_addr"
 }
 
 # Remove all existing IPv6 addresses
@@ -41,6 +46,3 @@ remove_existing_ipv6_addresses
 
 # Add new IPv6 addresses for the proxies
 add_new_ipv6_addresses "$1"
-
-# Start the 3proxy service
-systemctl start 3proxy
