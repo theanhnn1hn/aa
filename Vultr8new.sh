@@ -15,7 +15,6 @@ gen64() {
     echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
 
-# Hàm này sẽ xóa các cài đặt cũ của 3proxy và cài đặt lại 3proxy
 reset_3proxy() {
     # Dừng dịch vụ 3proxy
     systemctl stop 3proxy
@@ -26,10 +25,16 @@ reset_3proxy() {
     # Xóa các cấu hình iptables liên quan đến 3proxy
     iptables-save | grep -v "3proxy" | iptables-restore
 
-    # Xóa các địa chỉ IPv6 đã thêm trước đó
-    while read -r line; do
-        ifconfig "$main_interface" inet6 del "$line"/64
-    done < /home/proxy-installer/boot_ifconfig.sh
+    # Kiểm tra xem tệp /home/proxy-installer/boot_ifconfig.sh có tồn tại không
+    if [ -f /home/proxy-installer/boot_ifconfig.sh ]; then
+        # Xóa các địa chỉ IPv6 đã thêm trước đó
+        while read -r line; do
+            ip -6 addr del "$line"/64 dev "$main_interface"
+        done < /home/proxy-installer/boot_ifconfig.sh
+
+        # Xóa tệp boot_ifconfig.sh
+        rm /home/proxy-installer/boot_ifconfig.sh
+    fi
 }
 
 install_3proxy() {
