@@ -26,16 +26,11 @@ reset_3proxy() {
     iptables-save | grep -v "3proxy" | iptables-restore
 
     # Xóa các địa chỉ IPv6 đã thêm trước đó
-    ip -6 addr show dev $main_interface | grep -o "inet6.*scope link" | awk '{print $2}' | while read -r line; do
-        ip -6 addr del $line dev $main_interface
-    done
-}
-
-remove_existing_ipv6_addresses() {
-    existing_ipv6_addresses=$(ip -6 addr show dev "$main_interface" | grep 'inet6' | awk '{print $2}')
-    for addr in $existing_ipv6_addresses; do
-        ip -6 addr del "$addr" dev "$main_interface"
-    done
+    while read -r line; do
+        ip=$(echo "$line" | awk -F'/' '{print $1}')
+        mask=$(echo "$line" | awk -F'/' '{print $2}')
+        ifconfig "$main_interface" inet6 del "$ip"/"$mask"
+    done < /home/proxy-installer/boot_ifconfig.sh
 }
 
 install_3proxy() {
@@ -111,7 +106,7 @@ EOF
 }
 
 gen_ifconfig() {
-    remove_existing_ipv6_addresses
+    #remove_existing_ipv6_addresses
     cat <<EOF
 $(awk -F "/" '{print "ip -6 addr show dev '$main_interface' | grep -q " $5 " || ip -6 addr add " $5 "/64 dev '$main_interface'"}' ${WORKDATA})
 EOF
