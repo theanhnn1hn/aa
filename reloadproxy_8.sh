@@ -22,13 +22,12 @@ add_new_ipv6_addresses() {
   # Get the current IPv6 prefix
   IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
-  # Remove all existing IPv6 addresses
-  remove_existing_ipv6_addresses
-
   # Generate new IPv6 addresses for the proxies
   for i in $(seq 1 "$1"); do
     ipv6_addr=$(gen64 "$IP6")
-    ip -6 addr add "$ipv6_addr/64" dev "$main_interface"
+    if ! ip -6 addr add "$ipv6_addr/64" dev "$main_interface"; then
+      echo "Failed to assign IPv6 address $ipv6_addr"
+    fi
   done
 }
 
@@ -43,6 +42,12 @@ gen64() {
   done
   echo "$ipv6_addr"
 }
+
+# Remove all existing IPv6 addresses
+remove_existing_ipv6_addresses
+
+# Activate the main network interface
+ip link set "$main_interface" up
 
 # Add new IPv6 addresses for the proxies
 add_new_ipv6_addresses "$1"
