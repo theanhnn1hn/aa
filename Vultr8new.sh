@@ -25,17 +25,14 @@ reset_3proxy() {
     # Xóa các cấu hình iptables liên quan đến 3proxy
     iptables-save | grep -v "3proxy" | iptables-restore
 
-    # Kiểm tra xem tệp /home/proxy-installer/boot_ifconfig.sh có tồn tại không
-    if [ -f /home/proxy-installer/boot_ifconfig.sh ]; then
-        # Xóa các địa chỉ IPv6 đã thêm trước đó
-        while read -r line; do
-            ip -6 addr del "$line"/64 dev "$main_interface"
-        done < /home/proxy-installer/boot_ifconfig.sh
-
-        # Xóa tệp boot_ifconfig.sh
-        rm /home/proxy-installer/boot_ifconfig.sh
-    fi
+    # Xóa các địa chỉ IPv6 đã thêm trước đó
+    while read -r line; do
+        ip=$(echo "$line" | awk '{print $1}')
+        subnet=$(echo "$line" | awk '{print $2}')
+        ip -6 addr del "$ip/$subnet" dev "$main_interface"
+    done < /home/proxy-installer/boot_ifconfig.sh
 }
+
 
 remove_existing_ipv6_addresses() {
     existing_ipv6_addresses=$(ip -6 addr show dev "$main_interface" | grep 'inet6' | awk '{print $2}')
