@@ -29,7 +29,7 @@ LAST_PORT=$(($FIRST_PORT + $num_ipv6 - 1))
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
         #echo "$(gen64 $(curl -6 -s icanhazip.com | cut -f1-4 -d':'))"
-        echo "yag/anhbiencong/$IP4/$port/$(gen64 $(curl -6 -s icanhazip.com | cut -f1-4 -d':'))"
+        echo "yag/anhbiencong/$IP4/$port/$(gen64 $IP6)"
     done
 }
 gen_data > $WORKDIR/data.txt
