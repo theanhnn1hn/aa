@@ -48,7 +48,7 @@ EOF
 }
 gen_ifconfig > $WORKDIR/boot_ifconfig.sh
 gen_iptables > $WORKDIR/boot_iptables.sh
-systemctl start NetworkManager.service
+systemctl restart NetworkManager.service
 if ! grep -q "bash ${WORKDIR}/boot_iptables.sh" /etc/rc.local; then
     cat >>/etc/rc.local <<EOF
 ifup $main_interface
