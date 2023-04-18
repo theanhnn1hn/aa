@@ -38,4 +38,4 @@ gen_iptables() {
 EOF
 }
 gen_ifconfig > $WORKDIR/boot_ifconfig.sh
-gen_iptables >$WORKDIR/boot_iptables.sh
+gen_iptables > $WORKDIR/boot_iptables.sh
