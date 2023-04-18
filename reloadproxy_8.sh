@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 WORKDIR="/home/proxy-installer"
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
 main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
@@ -22,7 +22,7 @@ ip -6 addr flush dev "$main_interface"
 
 IP4=$(curl -4 -s icanhazip.com)
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
-echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
+echo -e "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 FIRST_PORT=23000
 LAST_PORT=$(($FIRST_PORT + $num_ipv6 - 1))
 
@@ -43,7 +43,7 @@ EOF
 }
 gen_iptables() {
     cat <<EOF
-    $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDIR}/data.txt) 
+    $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDIR}/data.txt)
 EOF
 }
 gen_ifconfig > $WORKDIR/boot_ifconfig.sh
