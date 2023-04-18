@@ -20,7 +20,8 @@ ip -6 addr flush dev "$main_interface"
 # Generate new IPv6 addresses
 gen_data() {
     for i in $(seq 1 $num_ipv6); do
-        echo "$(gen64 $(curl -6 -s icanhazip.com | cut -f1-4 -d':'))"
+        #echo "$(gen64 $(curl -6 -s icanhazip.com | cut -f1-4 -d':'))"
+        echo "yag/anhbiencong/$IP4/$port/$(gen64 $(curl -6 -s icanhazip.com | cut -f1-4 -d':'))"
     done
 }
 gen_data > $WORKDIR/data.txt
@@ -28,7 +29,13 @@ gen_data > $WORKDIR/data.txt
 # Add the new IPv6 addresses to the interface
 gen_ifconfig() {
     cat <<EOF
-$(awk -F "/" '{print "ifconfig '$main_interface' inet6 add " $1 "/64"}' ${WORKDIR}/data.txt)
+$(awk -F "/" '{print "ifconfig '$main_interface' inet6 add " $5 "/64"}' ${WORKDIR}/data.txt)
+EOF
+}
+gen_iptables() {
+    cat <<EOF
+    $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDIR}/data.txt) 
 EOF
 }
 gen_ifconfig > $WORKDIR/boot_ifconfig.sh
+gen_iptables >$WORKDIR/boot_iptables.sh
