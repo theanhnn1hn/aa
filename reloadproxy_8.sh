@@ -49,3 +49,15 @@ EOF
 gen_ifconfig > $WORKDIR/boot_ifconfig.sh
 gen_iptables > $WORKDIR/boot_iptables.sh
 systemctl start NetworkManager.service
+if ! grep -q "bash ${WORKDIR}/boot_iptables.sh" /etc/rc.local; then
+    cat >>/etc/rc.local <<EOF
+ifup $main_interface
+bash ${WORKDIR}/boot_iptables.sh
+bash ${WORKDIR}/boot_ifconfig.sh
+ulimit -n 65535
+/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg &
+EOF
+fi
+
+bash /etc/rc.local
+systemctl restart 3proxy.service
