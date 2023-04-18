@@ -14,6 +14,9 @@ gen64() {
 # Remove all existing IPv6 addresses from boot_ifconfig.sh
 sed -i '/inet6/d' $WORKDIR/boot_ifconfig.sh
 
+# Remove all existing IPv6 addresses from boot_iptables.sh
+truncate -s 0 $WORKDIR/boot_iptables.sh
+
 # Remove all existing IPv6 addresses from the main network interface
 ip -6 addr flush dev "$main_interface"
 
