@@ -17,11 +17,16 @@ sed -i '/inet6/d' $WORKDIR/boot_ifconfig.sh
 # Remove all existing IPv6 addresses from the main network interface
 ip -6 addr flush dev "$main_interface"
 
+IP4=$(curl -4 -s icanhazip.com)
+IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
+FIRST_PORT=23000
+LAST_PORT=$(($FIRST_PORT + $num_ipv6 - 1))
+
 # Generate new IPv6 addresses
 gen_data() {
-    for i in $(seq 1 $num_ipv6); do
+    seq $FIRST_PORT $LAST_PORT | while read port; do
         #echo "$(gen64 $(curl -6 -s icanhazip.com | cut -f1-4 -d':'))"
-        echo "yag/anhbiencong/$IP4/$port/$(gen64 $(curl -6 -s icanhazip.com | cut -f1-4 -d':'))"
+        echo "yag/anhbiencong/$IP4/$port/$(gen64 $IP6)"
     done
 }
 gen_data > $WORKDIR/data.txt
