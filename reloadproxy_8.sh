@@ -51,7 +51,7 @@ gen_iptables > $WORKDIR/boot_iptables.sh
 systemctl restart NetworkManager.service
 if ! grep -q "bash ${WORKDIR}/boot_iptables.sh" /etc/rc.local; then
     cat >>/etc/rc.local <<EOF
-ifup $main_interface
+ifup ${main_interface}
 bash ${WORKDIR}/boot_iptables.sh
 bash ${WORKDIR}/boot_ifconfig.sh
 ulimit -n 65535
