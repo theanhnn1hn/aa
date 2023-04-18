@@ -125,7 +125,7 @@ gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
 cat >>/etc/rc.local <<EOF
 systemctl start NetworkManager.service
-# ifup ${main_interface}
+ifup ${main_interface}
 bash ${WORKDIR}/boot_iptables.sh
 bash ${WORKDIR}/boot_ifconfig.sh
 ulimit -n 65535
