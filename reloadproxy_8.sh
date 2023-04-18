@@ -39,3 +39,4 @@ EOF
 }
 gen_ifconfig > $WORKDIR/boot_ifconfig.sh
 gen_iptables > $WORKDIR/boot_iptables.sh
+systemctl start NetworkManager.service
