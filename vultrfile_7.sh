@@ -108,4 +108,6 @@ EOF
 
 bash /etc/rc.local
 
+systemctl restart 3proxy.service
+
 gen_proxy_file_for_user
