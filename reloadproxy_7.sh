@@ -1,8 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 WORKDIR="/home/proxy-installer"
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
 main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
-num_ipv6=$1
 
 gen64() {
     ip64() {
@@ -18,13 +17,18 @@ sed -i '/inet6/d' $WORKDIR/boot_ifconfig.sh
 truncate -s 0 $WORKDIR/boot_iptables.sh
 
 # Remove all existing IPv6 addresses from the main network interface
-#ip -6 addr flush dev "$main_interface"
+ip -6 addr flush dev "$main_interface"
 
 IP4=$(curl -4 -s icanhazip.com)
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
-echo -e "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
+
+if [ -z "$1" ]; then
+    echo "Usage: $0 <number_of_proxies>"
+    exit 1
+fi
+num_proxies=$1
 FIRST_PORT=23000
-LAST_PORT=$(($FIRST_PORT + $num_ipv6 - 1))
+LAST_PORT=$(($FIRST_PORT + $num_proxies - 1))
 
 # Generate new IPv6 addresses
 gen_data() {
