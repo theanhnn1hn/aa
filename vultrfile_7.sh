@@ -44,7 +44,7 @@ done
 
 # Removed unnecessary code to read PROXYCOUNT
 
-START_PORT=2300
+START_PORT=23000
 STATIC="no"
 INCTAIL="no"
 INCTAILSTEPS=1
