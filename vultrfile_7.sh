@@ -1,36 +1,3 @@
-Skip to content
-Search or jump to…
-Pull requests
-Issues
-Codespaces
-Marketplace
-Explore
- 
-@theanhnn1hn 
-theanhnn1hn
-/
-aa
-Public
-Cannot fork because you own this repository and are not a member of any organizations.
-Code
-Issues
-Pull requests
-Actions
-Projects
-Wiki
-Security
-Insights
-Settings
-Beta Try the new code view
-aa/vultrfile_8.sh
-@theanhnn1hn
-theanhnn1hn Update vultrfile_8.sh
-Latest commit 3a2506b 8 hours ago
- History
- 1 contributor
-137 lines (115 sloc)  3.61 KB
- 
-
 #!/bin/sh
 random() {
 	tr </dev/urandom -dc A-Za-z0-9 | head -c5
