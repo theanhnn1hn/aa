@@ -72,7 +72,8 @@ if ! grep -q "bash ${WORKDIR}/boot_iptables.sh" /etc/rc.local; then
     cat >>/etc/rc.local <<EOF
 bash ${WORKDIR}/boot_iptables.sh
 bash ${WORKDIR}/boot_ifconfig.sh
-ulimit -n 65535
+ulimit -n 10048
+service 3proxy start
 EOF
 fi
 
