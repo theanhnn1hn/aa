@@ -44,6 +44,30 @@ EOF
 gen_ifconfig > $WORKDIR/boot_ifconfig.sh
 gen_iptables > $WORKDIR/boot_iptables.sh
 systemctl restart NetworkManager.service
+
+# Generate 3proxy configuration with new IPv6 addresses
+gen_3proxy() {
+    cat <<EOF
+daemon
+maxconn 1000
+nscache 65536
+timeouts 1 5 30 60 180 1800 15 60
+setgid 65535
+setuid 65535
+flush
+auth strong
+
+users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDIR}/data.txt)
+
+$(awk -F "/" '{print "auth strong\n" \
+"allow " $1 "\n" \
+"proxy -6 -n -a -p" $4 " -i" $3 " -e"$5"\n" \
+"flush\n"}' ${WORKDIR}/data.txt)
+EOF
+}
+
+gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
+
 if ! grep -q "bash ${WORKDIR}/boot_iptables.sh" /etc/rc.local; then
     cat >>/etc/rc.local <<EOF
 bash ${WORKDIR}/boot_iptables.sh
