@@ -141,7 +141,7 @@ yum -y install git
 install_3proxy
 
 # ###################
-WORKDIR="/home/proxy-installer"
+WORKDIR="/usr/local/3proxy/installer"
 WORKDATA="${WORKDIR}/data.txt"
 mkdir -p $WORKDIR
 eecho "Working folder = $WORKDIR"
