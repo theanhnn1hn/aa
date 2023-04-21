@@ -17,16 +17,19 @@ gen64() {
 gen_3proxy() {
     cat <<EOF
 daemon
-maxconn 1000
+maxconn 2000
+nserver 1.1.1.1
+nserver 8.8.4.4
+nserver 2001:4860:4860::8888
+nserver 2001:4860:4860::8844
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
 setuid 65535
+stacksize 6291456 
 flush
 auth strong
-
 users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
-
 $(awk -F "/" '{print "auth strong\n" \
 "allow " $1 "\n" \
 "proxy -6 -n -a -p" $4 " -i" $3 " -e"$5"\n" \
@@ -39,7 +42,6 @@ gen_proxy_file_for_user() {
 $(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
 EOF
 }
-
 
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
@@ -58,6 +60,17 @@ gen_ifconfig() {
 $(awk -F "/" '{print "ifconfig '$main_interface' inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
+echo "installing apps"
+yum -y install gcc net-tools bsdtar zip make >/dev/null
+
+install_3proxy
+
+if [ -z "$1" ]; then
+    echo "Usage: $0 <number_of_proxies>"
+    exit 1
+fi
+
+num_proxies=$1
 
 echo "working folder = /home/proxy-installer"
 WORKDIR="/home/proxy-installer"
@@ -67,27 +80,28 @@ mkdir $WORKDIR && cd $_
 IP4=$(curl -4 -s icanhazip.com)
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
-if [ -z "$1" ]; then
-    echo "Usage: $0 <number_of_proxies>"
-    exit 1
-fi
-num_proxies=$1
+echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
+
 FIRST_PORT=23000
 LAST_PORT=$(($FIRST_PORT + $num_proxies - 1))
 
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
-chmod +x ${WORKDIR}/boot_*.sh /etc/rc.local
+echo NM_CONTROLLED="no" >> /etc/sysconfig/network-scripts/ifcfg-${main_interface}
+chmod +x $WORKDIR/boot_*.sh /etc/rc.local
 
 gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
 cat >>/etc/rc.local <<EOF
+systemctl start NetworkManager.service
+ifup ${main_interface}
 bash ${WORKDIR}/boot_iptables.sh
 bash ${WORKDIR}/boot_ifconfig.sh
-ulimit -n 10048
+ulimit -n 65535
+/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg &
 EOF
 
 bash /etc/rc.local
 
-systemctl restart 3proxy.service
+gen_proxy_file_for_user
