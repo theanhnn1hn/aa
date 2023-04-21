@@ -54,4 +54,3 @@ fi
 
 bash /etc/rc.local
 systemctl restart 3proxy.service
-service network restart
